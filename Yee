@@ -1,0 +1,20 @@
+import time
+import datetime
+from yeelight import Bulb
+
+def blue():
+    track = time.time()
+    bulb.set_rgb(0, 204, 204)
+def red():
+    bulb.set_rgb(255, 153, 153)
+    track = time.time()
+track = time.time()
+bulb = Bulb("192.168.100.96")
+bulb.set_rgb(255,255,255)
+bulb.turn_on()
+blue()
+t = 1
+while t > 0:
+    if time.time() - 3 > track:
+        bulb.set_rgb(255,255,255)
+        t=-1
