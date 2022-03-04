@@ -2,15 +2,15 @@ import influxdb_client
 from influxdb_client.client.write_api import SYNCHRONOUS
 import RPi.GPIO as GPIO  # puertos de raspberry
 import time
-#from w1thermsensor import W1ThermSensor #libreria para sensor de temperatura de agua
 from yeelight import Bulb  # Libreria para foco MI
 from w1thermsensor import W1ThermSensor, Unit
 import numpy as np
+import telegram
 
-def send_data_idb(totlit, time_s, temper):  # Función donde tenemos los datos para el envio de informacion a influxdb
+def idb(totlit, time_s, temper):  # Función donde tenemos los datos para el envio de informacion a influxdb
     bucket = "Raspi"
     org = "jirs28"
-    token = "VksMePOqNhrLWmA29wyq7FTcHOKPO0eeMBYX0ILkwT2DgN6rWzmOeS8g8JVCX3wBgwu6py1ftSGLAYyt46A1Bg=="
+    token = "wxgUhrtTvlLLy845NFBXIeJb4pdltNx83a3Rrudiynm5DtvU2hhpl25G_slzkL-43KvmeTkPIWu1wWHXfeMCsQ=="
     url = "https://us-east-1-1.aws.cloud2.influxdata.com"
 
     client = influxdb_client.InfluxDBClient(
@@ -20,13 +20,31 @@ def send_data_idb(totlit, time_s, temper):  # Función donde tenemos los datos p
     )
 
     write_api = client.write_api(write_options=SYNCHRONOUS)
-    p = influxdb_client.Point("Litros por baño").tag("Zone", "baño").field("Litros", totlit)
-    ptime = influxdb_client.Point("Tiempo por baño").tag("Zone", "baño").field("Segundos", time_s)
-    ptemp = influxdb_client.Point("Temperatura promedio").tag("Zone", "baño").field("Temperatura", temper)
+    p = influxdb_client.Point("Litros por baño").field("Litros", totlit)
+    ptime = influxdb_client.Point("Tiempo por baño").field("Segundos", time_s)
+    ptemp = influxdb_client.Point("Temperatura promedio").field("Celsius", temper)
     write_api.write(bucket=bucket, org=org, record=p)
     write_api.write(bucket=bucket, org=org, record=ptime)
     write_api.write(bucket=bucket, org=org, record=ptemp)
     print("Data Sended")
+
+
+
+
+def send_alerts(lit, timeS, tempe):
+    api_key = '5225831499:AAH-0_bNem_7_fhM0exw1Mx_tWozVVjlU64'
+    user_id = '@RgaderaBot'
+    fechB = time.strftime("%x")
+    horaB = time.strftime("%X")
+
+    bot = telegram.Bot(token=api_key)
+    msg = ('Reporte de uso de la regadera el dia: '+fechB, 'a la hora: '+horaB)
+    bot.send_message(chat_id=user_id, text=msg)
+    bot.send_message(chat_id=user_id, text='Litros: ' + str(lit))
+    bot.send_message(chat_id=user_id, text='Tiempo: ' + str(timeS))
+    bot.send_message(chat_id=user_id, text='Temperatura promedio: ' + str(tempe))
+
+    
 
 
 def light_color_w():
@@ -35,13 +53,24 @@ def light_color_w():
     bulb.set_brightness(100)  # Ajustamos el brillo al 100
     bulb.set_color_temp(6500)  # Ajustamos la temperatura del foco
 
+    
+    
+def blue():
+    track = time.time()
+    bulb.set_rgb(0, 204, 204)
+    
+    
+    
+def red():
+    track = time.time()
+    bulb.set_rgb(255, 153, 153)
 
-def light_color_r():
-    bulb.turn_on()  # encendemos el foco
-    bulb.set_hsv(316, 34.6, 91.8)  # establecemos el color del foco en formato HSV
-    # bulb.set_brightness(100)  # Ajustamos el brillo al 100
-    # bulb.set_color_temp(6500)  # Ajustamos la temperatura del foco
-    time.sleep(4)
+
+def Pulse_cnt(inpt_pin):
+    global rate_cnt, tot_cnt
+    rate_cnt += 1
+    tot_cnt += 1
+
 
 
 GPIO.setmode(GPIO.BCM)
@@ -59,17 +88,13 @@ aux = 0
 bulb = Bulb("192.168.100.96")
 temperaturas = []
 sensor = W1ThermSensor()
+track = time.time()
 
 
-def Pulse_cnt(inpt_pin):
-    global rate_cnt, tot_cnt
-    rate_cnt += 1
-    tot_cnt += 1
 
 
 GPIO.add_event_detect(inpt, GPIO.FALLING, callback=Pulse_cnt)
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
     # MAIN
@@ -86,13 +111,13 @@ if __name__ == '__main__':
         TotLit = round(tot_cnt * constant, 2)
         temperature_in_celsius = sensor.get_temperature()
         temperaturas.append(temperature_in_celsius)
-        if (TotLit >= 2 and aux == 0):
-            bulb.set_rgb(243, 159, 24)
-            bulb.set_brightness(100)
-            bulb.set_color_temp(6500)  # color rojo al foco
+        if time.time() + 3 > track: 
+            bulb.set_rgb (255,255,255)
+        if (TotLit >= 1 and aux == 0):
+            red() # color rojo al foco
             print("Excediste de litros")
             aux = 1
-        time.sleep(0.9)
+        time.sleep(0.5)
 
     final = time.time()
     time_shower = round((final - inicio), 2)
@@ -101,5 +126,7 @@ if __name__ == '__main__':
     GPIO.cleanup()
     bulb.turn_off()
     Temp = np.mean(temperaturas)
-    send_data_idb(TotLit, time_shower, Temp)  # Llamar la función para enviar la cantidad de litros gastados
+    idb(TotLit, time_shower, Temp)  # Llamar la función para enviar la cantidad de litros gastados
+    send_alerts(TotLit, time_shower, Temp)
     print("Se acabo")
+
