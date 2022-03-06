@@ -42,9 +42,9 @@ def send_alerts(lit, timeS, tempe):
     bot = telegram.Bot(token=api_key)
     msg = ('Reporte de uso de la regadera el dia: '+fechB, 'a la hora: '+horaB)
     bot.send_message(chat_id=user_id, text=msg)
-    bot.send_message(chat_id=user_id, text='Litros: ' + str(lit))
-    bot.send_message(chat_id=user_id, text='Tiempo: ' + str(timeS))
-    bot.send_message(chat_id=user_id, text='Temperatura promedio: ' + str(tempe))
+    bot.send_message(chat_id=user_id, text='Usaste ' + str(lit)+ ' litros')
+    bot.send_message(chat_id=user_id, text='Tu baño duro  ' + str(timeS)+' minutos')
+    bot.send_message(chat_id=user_id, text='Temperatura promedio: ' + str(tempe)+' grados Celsius')
 
     
 
