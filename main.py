@@ -7,10 +7,11 @@ from w1thermsensor import W1ThermSensor, Unit
 import numpy as np
 import telegram
 
+
 def idb(totlit, time_s, temper):  # Función donde tenemos los datos para el envio de informacion a influxdb
-    bucket = "Raspi"
+    bucket = "ShowerS"
     org = "jirs28"
-    token = "wxgUhrtTvlLLy845NFBXIeJb4pdltNx83a3Rrudiynm5DtvU2hhpl25G_slzkL-43KvmeTkPIWu1wWHXfeMCsQ=="
+    token = "CogeqAhxfHt5o-0rkeCtKiMxyhXMjJaqugbHUN_LisF7cvH9LaIyDvFAZfU5CEDVrFkiYeh_69_TQ-NKUsKCeg=="
     url = "https://us-east-1-1.aws.cloud2.influxdata.com"
 
     client = influxdb_client.InfluxDBClient(
@@ -20,13 +21,14 @@ def idb(totlit, time_s, temper):  # Función donde tenemos los datos para el env
     )
 
     write_api = client.write_api(write_options=SYNCHRONOUS)
-    p = influxdb_client.Point("Litros por baño").field("Litros", totlit)
-    ptime = influxdb_client.Point("Tiempo por baño").field("Segundos", time_s)
-    ptemp = influxdb_client.Point("Temperatura promedio").field("Celsius", temper)
+    p = influxdb_client.Point("Litros").field("Litros", totlit)
+    ptime = influxdb_client.Point("Tiempo").field("Segundos", time_s)
+    ptemp = influxdb_client.Point("TemperaturaProm").field("Celsius", temper)
     write_api.write(bucket=bucket, org=org, record=p)
     write_api.write(bucket=bucket, org=org, record=ptime)
     write_api.write(bucket=bucket, org=org, record=ptemp)
-    print("Data Sended")
+    client.close()
+
 
 
 
