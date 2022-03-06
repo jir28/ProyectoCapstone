@@ -7,8 +7,7 @@ from w1thermsensor import W1ThermSensor, Unit
 import numpy as np
 import telegram
 
-
-def idb(totlit, time_s, temper):  # Función donde tenemos los datos para el envio de informacion a influxdb
+def send_data_idb(totlit, time_s, temper):
     bucket = "ShowerS"
     org = "jirs28"
     token = "CogeqAhxfHt5o-0rkeCtKiMxyhXMjJaqugbHUN_LisF7cvH9LaIyDvFAZfU5CEDVrFkiYeh_69_TQ-NKUsKCeg=="
