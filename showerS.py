@@ -116,7 +116,6 @@ def flujo():
         #Lo primero que hace cuando hay flujo es tomar una captura de la hora y enviar mensaje de bienvenida
         if (auxmsg == 0):
             inicio = time.time()
-            bulb.turn_on()  # encendemos el foco
             whitheBulb()
             BienvenidaMsg(msgWelcome)
             auxmsg = 1
