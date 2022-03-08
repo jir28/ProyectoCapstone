@@ -48,7 +48,7 @@ def send_alerts(lit, timeS, tempe):
     
 
 
-def light_color_w():
+def whitheBulb():
     bulb.turn_on()  # encendemos el foco
     bulb.set_hsv(360, 0, 1)  # establecemos el color del foco en formato HSV
     bulb.set_brightness(100)  # Ajustamos el brillo al 100
@@ -57,13 +57,11 @@ def light_color_w():
     
     
 def blue():
-    track = time.time()
     bulb.set_rgb(0, 204, 204)
     
     
     
 def red():
-    track = time.time()
     bulb.set_rgb(255, 153, 153)
 
 
@@ -82,10 +80,9 @@ constant = 0.00210
 time_new = 0.0
 rpt_int = 10
 
-global rate_cnt, tot_cnt, TotLit, LperM, tiempo, aux, bulb
+global rate_cnt, tot_cnt, TotLit, LperM, tiempo, bulb
 rate_cnt = 0
 tot_cnt = 0
-aux = 0
 bulb = Bulb("192.168.100.96")
 temperaturas = []
 sensor = W1ThermSensor()
@@ -102,23 +99,27 @@ if __name__ == '__main__':
     print("Registro de litros gastados y temperatura promedio el dia: ", str(time.asctime(time.localtime(time.time()))))
     rpt_int = int(input("\nSegundos de captar el flujo "))
     print("Control + c para salir")
+    # Variables auxiliares
+    auxLiters = 0
+    aux1 = 0
+    auxR = 0
+    auxTemp = 0
     bulb.turn_on()  # encendemos el foco
-    bulb.set_hsv(47, 0, 1)
-    bulb.set_brightness(100)
-    bulb.set_color_temp(6500)
+    whitheBulb()
     inicio = time.time()
     while (rpt_int < 10):  # rpt_int<10 or,,or GPIO.input(inpt)==True <-- esta linea para pruebas antes de todo lo demas
         rpt_int += 1
+        auxR += 1
         TotLit = round(tot_cnt * constant, 2)
-        temperature_in_celsius = sensor.get_temperature()
-        temperaturas.append(temperature_in_celsius)
-        if time.time() + 3 > track: 
-            bulb.set_rgb (255,255,255)
-        if (TotLit >= 1 and aux == 0):
+        t_celsius = sensor.get_temperature()
+        temperaturas.append(t_celsius)
+        if (TotLit >= 10 and auxLiters == 0):
             red() # color rojo al foco
             print("Excediste de litros")
-            aux = 1
-        time.sleep(0.5)
+            auxLiters = 1
+        if (auxLiters == 1 and auxR >=6):
+            whitheBulb()#Volvemos a foco blanco
+        time.sleep(1)
 
     final = time.time()
     time_shower = round((final - inicio), 2)
