@@ -16,7 +16,6 @@ Sensores y materiales necesarios
 - Placa de pruebas protoboard
 - Cable para protoboard
 - Termofit
-- Sonoff Basic R2
 - Extensión eléctrica
 
 
