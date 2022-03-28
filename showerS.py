@@ -12,17 +12,17 @@ def send_data_idb(totlit, time_s, temper): #La función que envía información 
     LITERS = int(totlit)
     TIEMPO =int(time_s)
     TEMPER = int(temper)
-    bucket = "ShowerS" # Donde se van a guardar
-    org = "jirs28"# Infopmración necesaria para identificar donde 
-    token = "CogeqAhxfHt5o-0rkeCtKiMxyhXMjJaqugbHUN_LisF7cvH9LaIyDvFAZfU5CEDVrFkiYeh_69_TQ-NKUsKCeg=="
-    url = "https://us-east-1-1.aws.cloud2.influxdata.com"
+    bucket = "ShowerS" # Colocar el nombre del bucket de nuetra base de datos en influx
+    org = "jirs28"# Nombre de la organizacion registrada en influx db
+    token = "CogeqAhxfHt5o-0rkeCtKiMxyhXMjJaqugbHUN_LisF7cvH9LaIyDvFAZfU5CEDVrFkiYeh_69_TQ-NKUsKCeg==" # Obtener el token dando acceso de lectura y escritura al bucket
+    url = "https://us-east-1-1.aws.cloud2.influxdata.com"# URL del servidor de influx, por lo general siempre sera el mismo en caso de elegir region U.S
 
     client = influxdb_client.InfluxDBClient(
         url=url,
         token=token,
         org=org
     )
-    #Comenzamos a escribir en la nube
+    # Envio de datos a influx
     write_api = client.write_api(write_options=SYNCHRONOUS)
     p = influxdb_client.Point("Litros").field("Litros", LITERS)
     ptime = influxdb_client.Point("Tiempo").field("Segundos", TIEMPO)
@@ -30,21 +30,21 @@ def send_data_idb(totlit, time_s, temper): #La función que envía información 
     write_api.write(bucket=bucket, org=org, record=p)
     write_api.write(bucket=bucket, org=org, record=ptime)
     write_api.write(bucket=bucket, org=org, record=ptemp)
-    client.close()
+    client.close()# cerramos el cliente para dejar de utilizar el servicio http que usa influx
 
 
 def BienvenidaMsg(msg): #Mensaje en el canal de bienvenida
-    api_key = '5225831499:AAH-0_bNem_7_fhM0exw1Mx_tWozVVjlU64'
-    user_id = '@RgaderaBot'
+    api_key = '5225831499:AAH-0_bNem_7_fhM0exw1Mx_tWozVVjlU64' # API key generada en telegram de nuestro bot, se obtiene con Both Father
+    user_id = '@RgaderaBot' # ID del bot, con el cual podemos buscarlo
     bot = telegram.Bot(token=api_key)
     bot.send_message(chat_id=user_id, text=msg)
 
 
-def send_alerts(lit, timeS, tempe): #Resumen de banio que se manda por telegram
-    api_key = '5225831499:AAH-0_bNem_7_fhM0exw1Mx_tWozVVjlU64'
-    user_id = '@RgaderaBot'
-    fechB = time.strftime("%x")
-    horaB = time.strftime("%X")
+def send_alerts(lit, timeS, tempe): #Resumen de baño que se manda por telegram
+    api_key = '5225831499:AAH-0_bNem_7_fhM0exw1Mx_tWozVVjlU64' # API key generada en telegram de nuestro bot, se obtiene con Both Father
+    user_id = '@RgaderaBot' # ID del bot, con el cual podemos buscarlo
+    fechB = time.strftime("%x") # obtenemos la fecha en el momento que termina de usar la regadera
+    horaB = time.strftime("%X") # obtenemos la hora en el momento que termina de usar la regadera
 
     bot = telegram.Bot(token=api_key)
     msg = ('Reporte de uso de la regadera el dia: '+fechB, 'a la hora: '+horaB)
@@ -78,13 +78,13 @@ def red(): #Color del foco Rojo
 def Pulse_cnt(inpt_pin): #Sensor de flujo
     global rate_cnt, tot_cnt
     rate_cnt += 1
-    tot_cnt += 1
+    tot_cnt += 1 # Contabilizamos los litros
 
 
-#Las entradas a la pi
+#Definimos el modo de uso de los puertos de la Raspberry 
 GPIO.setmode(GPIO.BCM)
-inpt = 13
-GPIO.setup(inpt, GPIO.IN)
+inpt = 13 # Definir el puerto de data donde se conectara el sensor de flujo
+GPIO.setup(inpt, GPIO.IN) # Estabelcemos en modo IN el puerto del sensor de flujo
 time_new = 0.0
 rpt_int = 10
 
@@ -92,16 +92,16 @@ rpt_int = 10
 global rate_cnt, tot_cnt, TotLit, LperM, tiempo, bulb, inicio,check
 rate_cnt = 0
 tot_cnt = 0
-bulb = Bulb("192.168.100.96")
+bulb = Bulb("192.168.100.96")# definir la direccion IP local del foco yeelight
 inicio = 0
 temperaturas = []
-sensor = W1ThermSensor()
+sensor = W1ThermSensor() # Hacemos referencia al sensor de temepratura, por defecto, la libreria W1thermsensor busca en que puerto esta conectado el sensor de temperatura
 
 
 
 
 GPIO.add_event_detect(inpt, GPIO.FALLING, callback=Pulse_cnt)
-#FUnción prinicpal
+#Función prinicpal
 def flujo():
     inicio = 0
     check = 1
@@ -113,18 +113,18 @@ def flujo():
     auxColor = 0
     auxct = 0
     while litros > 0:  # Espera a que haya flujo de agua para comenzar a contar el tiempo
-        #Lo primero que hace cuando hay flujo es tomar una captura de la hora y enviar mensaje de bienvenida
+        #Lo primero que hace cuando hay flujo es tomar una captura de la hora, enviar mensaje de bienvenida y establece el colormdel foco a blanco
         if (auxmsg == 0):
             inicio = time.time()
             whitheBulb()
             BienvenidaMsg(msgWelcome)
             auxmsg = 1
         auxTime = 0
-        TotLit = round((tot_cnt * constant) , 5)
+        TotLit = round((tot_cnt * constant) , 5) # Contabiliza los litros por cada ciclo realizado para obtener un total
         t_celsius = sensor.get_temperature() #Obtenemos un valor del sensor de temperatura
-        temperaturas.append(t_celsius)#Agregamos el valor a un arreglo, para poder obtener un promedio de temepratura
+        temperaturas.append(t_celsius)#Agregamos el valor a un arreglo, para poder obtener un promedio de temepratura al final
         
-        if (TotLit >= 20 and auxColor == 0):# Si el usuario usa un garrafón de agua, el foco cambia a color azul
+        if (TotLit >= 20 and auxColor == 0):# Si el usuario usa mas de 20 litros  de agua, el foco cambia a color azul
             blue() # color rojo al foco
             auxColor = 1
 
@@ -138,11 +138,11 @@ def flujo():
 
         if(check - TotLit == 0): #Si la cantidad de agua durante el ciclo pasado y el actual es igual, significa que ya se apagó al regadera
             final = time.time()#Obtenemos la hora en la que acaba
-            time_shower = round((final - inicio)/60, 2) #Redondemaos el valor a dos decimales y hacemos la resta
-            GPIO.cleanup()#borramos los valores
+            time_shower = round((final - inicio)/60, 2) #Redondeamos el valor a dos decimales y hacemos la resta para sacar el tiempo de baño en minutos
+            GPIO.cleanup() # Cerramos y limpiamos los pines que usamos de la raspberry
             Temp = round(np.mean(temperaturas),2)#Obtenemos el promedio de temepratura, gracias numpy <3
             send_data_idb(TotLit, time_shower, Temp)  # escribimos los valores en nuestro bucket de influx
-            send_alerts(TotLit, time_shower, Temp) #Enviamos a telegramn
+            send_alerts(TotLit, time_shower, Temp) #Enviamos a telegram la alerta con el tiempo total de litros, tiempo que duro el baño y la temperatura promedio
             return 5 #Salimos de este programa
         time.sleep(0.99)#para no estar capurando miles de valores por segundo
         check = TotLit # Igualamos una variable auxiliar a los litro al final del ciclo y volvemos a empezar
